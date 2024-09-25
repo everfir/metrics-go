@@ -20,6 +20,8 @@ go.work
 # IDE-specific files
 .idea/
 .vscode/
+*.swp
+*.swo
 
 # OS-specific files
 .DS_Store
@@ -28,33 +30,38 @@ Thumbs.db
 # Log files
 *.log
 
-# Binary files
-bin/
-example/__debug_bin*
-
 # Temporary files
 *.tmp
-*.swp
-*.swo
+*.bak
+
+# Build output directory
+/bin/
+/dist/
 
 # Environment variables file
 .env
 
-# Build output directory
-build/
-
 # Debug files
 debug
+*debug*
 
 # Compiled Object files, Static and Dynamic libs (Shared Objects)
 *.o
 *.a
 
 # Go generated files
-_test.go
+_testmain.go
 
-# Profiling files
+# Profile output files
 *.prof
 
-# Coverage files
-*.cov
+# Coverage output files
+coverage.txt
+coverage.html
+
+# Prometheus data directory (if you're running Prometheus locally for testing)
+/data/
+
+# Any files or directories starting with . (except .gitignore)
+.*
+!.gitignore

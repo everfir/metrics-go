@@ -5,13 +5,16 @@ import (
 	"flag"
 	"fmt"
 	"math/rand"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"github.com/everfir/metrics-go"
+	"github.com/everfir/metrics-go/middleware"
 	"github.com/everfir/metrics-go/structs/metric_info"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -20,12 +23,13 @@ func main() {
 	port := flag.Int("port", 10086, "Port for collector mode")
 	pushAddr := flag.String("push-addr", "http://localhost:9091", "Pushgateway address for pushgateway mode")
 	pushInterval := flag.Duration("push-interval", 5*time.Second, "Push interval for pushgateway mode")
+	serverType := flag.String("server", "http", "Server type: http or gin")
 	flag.Parse()
 
 	// 准备通用的选项
 	opts := []metrics.Option{
 		metrics.WithNamespace("everfir"),
-		metrics.WithSubsystem("hyb-example"),
+		metrics.WithSubsystem("metrics_example"),
 	}
 
 	// 根据模式添加特定的选项
@@ -56,45 +60,41 @@ func main() {
 
 	// 注册指标
 	metrics.Register(metric_info.MetricInfo{
-		Type: metric_info.Counter,
-		Name: "example_counter",
-		Help: "An example counter",
+		Type:   metric_info.Counter,
+		Name:   metric_info.MetricName("example_counter"),
+		Help:   "An example counter",
+		Labels: []string{"label"},
 	})
 
 	metrics.Register(metric_info.MetricInfo{
-		Type: metric_info.Gauge,
-		Name: "example_gauge",
-		Help: "An example gauge",
+		Type:   metric_info.Gauge,
+		Name:   metric_info.MetricName("example_gauge"),
+		Help:   "An example gauge",
+		Labels: []string{"label"},
 	})
 
 	metrics.Register(metric_info.MetricInfo{
 		Type:    metric_info.Histogram,
-		Name:    "example_histogram",
+		Name:    metric_info.MetricName("example_histogram"),
 		Help:    "An example histogram",
 		Buckets: []float64{1, 5, 10, 50, 100},
+		Labels:  []string{"label"},
 	})
 
 	// 创建一个通道来接收终止信号
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	// 在后台持续上报数据
-	go func() {
-		for {
-			// 模拟一些数据上报
-			counterValue := 1.0
-			gaugeValue := rand.Float64() * 100
-			histogramValue := rand.Float64() * 200
-
-			metrics.Report(context.Background(), "example_counter", map[string]string{"label": "value"}, counterValue)
-			metrics.Report(context.Background(), "example_gauge", map[string]string{"label": "value"}, gaugeValue)
-			metrics.Report(context.Background(), "example_histogram", map[string]string{"label": "value"}, histogramValue)
-
-			fmt.Printf("Reported metrics - Counter: %.2f, Gauge: %.2f, Histogram: %.2f\n", counterValue, gaugeValue, histogramValue)
-
-			time.Sleep(1 * time.Second)
-		}
-	}()
+	// 启动服务器
+	switch *serverType {
+	case "http":
+		go startHTTPServer()
+	case "gin":
+		go startGinServer()
+	default:
+		fmt.Println("Invalid server type. Use 'http' or 'gin'.")
+		os.Exit(1)
+	}
 
 	fmt.Println("Application is running. Press Ctrl+C to exit.")
 
@@ -110,4 +110,44 @@ func main() {
 	}
 
 	fmt.Println("Application has been shut down.")
+}
+
+func startHTTPServer() {
+	httpMiddleware := middleware.HTTPMiddleware()
+	http.Handle("/", httpMiddleware.Middleware(http.HandlerFunc(handler)))
+	http.ListenAndServe(":8080", nil)
+}
+
+func startGinServer() {
+	r := gin.Default()
+	ginMiddleware := middleware.GinMiddleware()
+	r.Use(ginMiddleware.Middleware())
+	r.GET("/测试gin", ginHandler)
+	r.Run(":8080")
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	// 模拟一些数据上报
+	counterValue := 1.0
+	gaugeValue := rand.Float64() * 100
+	histogramValue := rand.Float64() * 200
+
+	metrics.Report(r.Context(), metric_info.MetricName("example_counter"), map[string]string{"label": "value"}, counterValue)
+	metrics.Report(r.Context(), metric_info.MetricName("example_gauge"), map[string]string{"label": "value"}, gaugeValue)
+	metrics.Report(r.Context(), metric_info.MetricName("example_histogram"), map[string]string{"label": "value"}, histogramValue)
+
+	fmt.Fprintf(w, "Reported metrics - Counter: %.2f, Gauge: %.2f, Histogram: %.2f\n", counterValue, gaugeValue, histogramValue)
+}
+
+func ginHandler(c *gin.Context) {
+	// 模拟一些数据上报
+	counterValue := 1.0
+	gaugeValue := rand.Float64() * 100
+	histogramValue := rand.Float64() * 200
+
+	metrics.Report(c.Request.Context(), metric_info.MetricName("example_counter"), map[string]string{"label": "value"}, counterValue)
+	metrics.Report(c.Request.Context(), metric_info.MetricName("example_gauge"), map[string]string{"label": "value"}, gaugeValue)
+	metrics.Report(c.Request.Context(), metric_info.MetricName("example_histogram"), map[string]string{"label": "value"}, histogramValue)
+
+	c.String(200, "Reported metrics - Counter: %.2f, Gauge: %.2f, Histogram: %.2f\n", counterValue, gaugeValue, histogramValue)
 }

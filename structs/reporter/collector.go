@@ -41,7 +41,7 @@ func (c *CollectorReporter) Register(info metric_info.MetricInfo) {
 	c.metrics.Register(info)
 }
 
-func (c *CollectorReporter) Report(ctx context.Context, name string, labels map[string]string, value float64) {
+func (c *CollectorReporter) Report(ctx context.Context, name metric_info.MetricName, labels map[string]string, value float64) {
 	c.metrics.Report(ctx, name, labels, value)
 }
 

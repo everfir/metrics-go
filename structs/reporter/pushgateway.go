@@ -47,7 +47,7 @@ func (p *PushgatewayReporter) Register(info metric_info.MetricInfo) {
 	p.metrics.Register(info)
 }
 
-func (p *PushgatewayReporter) Report(ctx context.Context, name string, labels map[string]string, value float64) {
+func (p *PushgatewayReporter) Report(ctx context.Context, name metric_info.MetricName, labels map[string]string, value float64) {
 	p.metrics.Report(ctx, name, labels, value)
 }
 

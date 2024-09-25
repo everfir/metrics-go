@@ -3,7 +3,6 @@ package metrics
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"sync"
 
 	"github.com/everfir/metrics-go/structs/config"
@@ -14,7 +13,6 @@ import (
 var (
 	r    reporter.MetricsReporter
 	once sync.Once
-	srv  *http.Server
 )
 
 // Init 初始化 metrics 系统
@@ -65,7 +63,7 @@ func Register(info metric_info.MetricInfo) {
 }
 
 // Report 允许用户上报数据
-func Report(ctx context.Context, name string, labels map[string]string, value float64) {
+func Report(ctx context.Context, name metric_info.MetricName, labels map[string]string, value float64) {
 	if r == nil {
 		panic("metrics not initialized, call Init() first")
 	}
