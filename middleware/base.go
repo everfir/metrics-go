@@ -17,16 +17,16 @@ var (
 
 // BaseMetricsMiddleware 包含所有协议共用的功能
 type BaseMetricsMiddleware struct {
-	buildinMetrics map[metric_info.MetricName]metric_info.MetricInfo
+	buildinMetrics map[metric_info.MetricName]*metric_info.MetricInfo
 }
 
 // NewBaseMetricsMiddleware 创建一个新的 BaseMetricsMiddleware
 func NewBaseMetricsMiddleware() (ret *BaseMetricsMiddleware) {
 	ret = &BaseMetricsMiddleware{
-		buildinMetrics: make(map[metric_info.MetricName]metric_info.MetricInfo),
+		buildinMetrics: make(map[metric_info.MetricName]*metric_info.MetricInfo),
 	}
 
-	ret.buildinMetrics[MetricRequestCnt] = metric_info.MetricInfo{
+	ret.buildinMetrics[MetricRequestCnt] = &metric_info.MetricInfo{
 		Type:         metric_info.Counter,
 		Name:         MetricRequestCnt,
 		Help:         "请求总数",
@@ -34,7 +34,7 @@ func NewBaseMetricsMiddleware() (ret *BaseMetricsMiddleware) {
 		LabelHandler: map[string]metric_info.LabelHandler{},
 	}
 
-	ret.buildinMetrics[MetricLatency] = metric_info.MetricInfo{
+	ret.buildinMetrics[MetricLatency] = &metric_info.MetricInfo{
 		Type:         metric_info.Histogram,
 		Name:         MetricLatency,
 		Help:         "请求时延",
@@ -42,7 +42,7 @@ func NewBaseMetricsMiddleware() (ret *BaseMetricsMiddleware) {
 		LabelHandler: map[string]metric_info.LabelHandler{},
 	}
 
-	ret.buildinMetrics[MetricStatusCode] = metric_info.MetricInfo{
+	ret.buildinMetrics[MetricStatusCode] = &metric_info.MetricInfo{
 		Type:         metric_info.Counter,
 		Name:         MetricStatusCode,
 		Help:         "响应状态码",
@@ -54,30 +54,27 @@ func NewBaseMetricsMiddleware() (ret *BaseMetricsMiddleware) {
 }
 
 // WithLabel 添加一个标签处理器
-func (b *BaseMetricsMiddleware) WithLabelHandler(
-	name metric_info.MetricName,
-	label string,
-	handler metric_info.LabelHandler,
-) {
-	b.buildinMetrics[name].LabelHandler[label] = handler
+func (b *BaseMetricsMiddleware) WithLabelHandler(label string, handler metric_info.LabelHandler) {
+	for _, info := range b.buildinMetrics {
+		info.LabelHandler[label] = handler
+	}
 }
 
-func (b *BaseMetricsMiddleware) WithMetric(info metric_info.MetricInfo) {
+func (b *BaseMetricsMiddleware) WithMetric(info *metric_info.MetricInfo) {
 	b.buildinMetrics[info.Name] = info
 }
 
-func (b *BaseMetricsMiddleware) RenameMetric(oldName, newName metric_info.MetricName) {
-	if info, ok := b.buildinMetrics[oldName]; ok {
-		info.Name = newName
-		b.buildinMetrics[newName] = info
-
-		delete(b.buildinMetrics, oldName)
+// UpdateMetric 更新一个指标， 如果指标不存在，则注册一个新指标，仅能在初始化时调用
+func (b *BaseMetricsMiddleware) UpdateMetric(name metric_info.MetricName, info *metric_info.MetricName) {
+	if info, ok := b.buildinMetrics[name]; ok {
+		b.buildinMetrics[info.Name] = info
+		delete(b.buildinMetrics, name)
 	}
 }
 
 func (b *BaseMetricsMiddleware) clone() *BaseMetricsMiddleware {
 	clone := &BaseMetricsMiddleware{
-		buildinMetrics: make(map[metric_info.MetricName]metric_info.MetricInfo),
+		buildinMetrics: make(map[metric_info.MetricName]*metric_info.MetricInfo),
 	}
 	for name, info := range b.buildinMetrics {
 		clone.buildinMetrics[name] = info
@@ -87,6 +84,6 @@ func (b *BaseMetricsMiddleware) clone() *BaseMetricsMiddleware {
 
 func (b *BaseMetricsMiddleware) Init() {
 	for _, info := range b.buildinMetrics {
-		metrics.Register(info)
+		metrics.Register(*info)
 	}
 }

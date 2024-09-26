@@ -58,7 +58,7 @@ func main() {
 		fmt.Printf("Pushgateway mode: Pushing to %s every %v\n", *pushAddr, *pushInterval)
 	}
 
-	// 注册指标
+	// 注册自定义指标
 	metrics.Register(metric_info.MetricInfo{
 		Type:   metric_info.Counter,
 		Name:   metric_info.MetricName("example_counter"),
@@ -115,7 +115,10 @@ func main() {
 func startHTTPServer() {
 	httpMiddleware := middleware.HTTPMiddleware()
 	http.Handle("/", httpMiddleware.Middleware(http.HandlerFunc(handler)))
-	http.ListenAndServe(":8080", nil)
+	fmt.Println("HTTP server starting on :8080")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		fmt.Printf("Failed to start HTTP server: %v\n", err)
+	}
 }
 
 func startGinServer() {
@@ -123,7 +126,10 @@ func startGinServer() {
 	ginMiddleware := middleware.GinMiddleware()
 	r.Use(ginMiddleware.Middleware())
 	r.GET("/测试gin", ginHandler)
-	r.Run(":8080")
+	fmt.Println("Gin server starting on :8080")
+	if err := r.Run(":8080"); err != nil {
+		fmt.Printf("Failed to start Gin server: %v\n", err)
+	}
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {

@@ -3,6 +3,7 @@ package metrics
 import (
 	"context"
 	"fmt"
+	"os"
 	"sync"
 
 	"github.com/everfir/metrics-go/structs/config"
@@ -15,12 +16,19 @@ var (
 	once sync.Once
 )
 
+const (
+	EnvNamespace = "Namespace"
+	EnvSystem    = "System"
+)
+
 // Init 初始化 metrics 系统
 func Init(opts ...Option) error {
 	cfg := &config.MetricsConfig{
 		ReportType: config.CollectorType, // 默认使用 Collector 模式
-		Port:       8080,                 // 默认端口
+		Port:       10083,                // 默认端口
 	}
+	cfg.Namespace = os.Getenv(EnvNamespace)
+	cfg.Subsystem = os.Getenv(EnvSystem)
 
 	for _, opt := range opts {
 		opt(cfg)
