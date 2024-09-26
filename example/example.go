@@ -114,6 +114,8 @@ func main() {
 
 func startHTTPServer() {
 	httpMiddleware := middleware.HTTPMiddleware()
+	httpMiddleware.Init()
+
 	http.Handle("/", httpMiddleware.Middleware(http.HandlerFunc(handler)))
 	fmt.Println("HTTP server starting on :8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
@@ -124,6 +126,7 @@ func startHTTPServer() {
 func startGinServer() {
 	r := gin.Default()
 	ginMiddleware := middleware.GinMiddleware()
+	ginMiddleware.Init()
 	r.Use(ginMiddleware.Middleware())
 	r.GET("/测试gin", ginHandler)
 	fmt.Println("Gin server starting on :8080")

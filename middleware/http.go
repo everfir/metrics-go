@@ -18,7 +18,6 @@ func HTTPMiddleware() *NetHTTPMetricsMiddleware {
 	m := &NetHTTPMetricsMiddleware{
 		BaseMetricsMiddleware: defaultBaseMiddleware.clone(),
 	}
-	m.Init()
 	return m
 }
 

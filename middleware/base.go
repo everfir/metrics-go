@@ -56,6 +56,9 @@ func NewBaseMetricsMiddleware() (ret *BaseMetricsMiddleware) {
 // WithLabel 添加一个标签处理器
 func (b *BaseMetricsMiddleware) WithLabelHandler(label string, handler metric_info.LabelHandler) {
 	for _, info := range b.buildinMetrics {
+		if _, ok := info.LabelHandler[label]; !ok {
+			info.Labels = append(info.Labels, label)
+		}
 		info.LabelHandler[label] = handler
 	}
 }
