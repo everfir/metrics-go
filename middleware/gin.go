@@ -18,8 +18,6 @@ func GinMiddleware() *GinMetricsMiddleware {
 	m := &GinMetricsMiddleware{
 		BaseMetricsMiddleware: defaultBaseMiddleware.clone(),
 	}
-	m.Init()
-
 	return m
 }
 
