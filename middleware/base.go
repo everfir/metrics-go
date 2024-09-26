@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"context"
+
 	"github.com/everfir/metrics-go"
 	"github.com/everfir/metrics-go/structs/metric_info"
 )
@@ -85,8 +87,8 @@ func (b *BaseMetricsMiddleware) clone() *BaseMetricsMiddleware {
 	return clone
 }
 
-func (b *BaseMetricsMiddleware) Init() {
+func (b *BaseMetricsMiddleware) Init(ctx context.Context) {
 	for _, info := range b.buildinMetrics {
-		metrics.Register(*info)
+		metrics.Register(ctx, *info)
 	}
 }

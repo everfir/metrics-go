@@ -16,6 +16,21 @@ const (
 	Summary
 )
 
+func (m MetricType) String() string {
+	switch m {
+	case Counter:
+		return "counter"
+	case Gauge:
+		return "gauge"
+	case Histogram:
+		return "histogram"
+	case Summary:
+		return "summary"
+	default:
+		return "unknown"
+	}
+}
+
 type MetricName string
 
 func (m MetricName) String() string {

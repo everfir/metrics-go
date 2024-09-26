@@ -2,9 +2,10 @@ package reporter
 
 import (
 	"context"
-	"fmt"
 	"time"
 
+	"github.com/everfir/logger-go"
+	"github.com/everfir/logger-go/structs/field"
 	"github.com/everfir/metrics-go/structs/metric_info"
 	"github.com/everfir/metrics-go/structs/metrics"
 	"github.com/prometheus/client_golang/prometheus/push"
@@ -38,7 +39,7 @@ func NewPushgatewayReporter(namespace, subsystem, pushAddr, jobName string, push
 func (p *PushgatewayReporter) startPushing() {
 	for range p.pushTimer.C {
 		if err := p.pusher.Push(); err != nil {
-			fmt.Printf("Could not push to Pushgateway: %v\n", err)
+			logger.Warn(context.TODO(), "Could not push to Pushgateway", field.String("err", err.Error()))
 		}
 	}
 }

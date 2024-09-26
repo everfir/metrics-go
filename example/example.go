@@ -59,21 +59,22 @@ func main() {
 	}
 
 	// 注册自定义指标
-	metrics.Register(metric_info.MetricInfo{
+	ctx := context.Background()
+	metrics.Register(ctx, metric_info.MetricInfo{
 		Type:   metric_info.Counter,
 		Name:   metric_info.MetricName("example_counter"),
 		Help:   "An example counter",
 		Labels: []string{"label"},
 	})
 
-	metrics.Register(metric_info.MetricInfo{
+	metrics.Register(ctx, metric_info.MetricInfo{
 		Type:   metric_info.Gauge,
 		Name:   metric_info.MetricName("example_gauge"),
 		Help:   "An example gauge",
 		Labels: []string{"label"},
 	})
 
-	metrics.Register(metric_info.MetricInfo{
+	metrics.Register(ctx, metric_info.MetricInfo{
 		Type:    metric_info.Histogram,
 		Name:    metric_info.MetricName("example_histogram"),
 		Help:    "An example histogram",
@@ -114,7 +115,7 @@ func main() {
 
 func startHTTPServer() {
 	httpMiddleware := middleware.HTTPMiddleware()
-	httpMiddleware.Init()
+	httpMiddleware.Init(context.TODO())
 
 	http.Handle("/", httpMiddleware.Middleware(http.HandlerFunc(handler)))
 	fmt.Println("HTTP server starting on :8080")
@@ -126,7 +127,7 @@ func startHTTPServer() {
 func startGinServer() {
 	r := gin.Default()
 	ginMiddleware := middleware.GinMiddleware()
-	ginMiddleware.Init()
+	ginMiddleware.Init(context.TODO())
 	r.Use(ginMiddleware.Middleware())
 	r.GET("/测试gin", ginHandler)
 	fmt.Println("Gin server starting on :8080")

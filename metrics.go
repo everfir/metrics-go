@@ -6,6 +6,8 @@ import (
 	"os"
 	"sync"
 
+	"github.com/everfir/logger-go"
+	"github.com/everfir/logger-go/structs/field"
 	"github.com/everfir/metrics-go/structs/config"
 	"github.com/everfir/metrics-go/structs/metric_info"
 	"github.com/everfir/metrics-go/structs/reporter"
@@ -63,11 +65,16 @@ func Close(ctx context.Context) error {
 }
 
 // Register 允许用户注册新的指标
-func Register(info metric_info.MetricInfo) {
+func Register(ctx context.Context, info metric_info.MetricInfo) {
 	if r == nil {
 		panic("[metrics] metrics not initialized, call Init() first")
 	}
 	r.Register(info)
+	logger.Debug(ctx, "metrics registered",
+		field.String("name", info.Name.String()),
+		field.String("type", info.Type.String()),
+		field.Any("labels", info.Labels),
+	)
 }
 
 // Report 允许用户上报数据
@@ -76,4 +83,9 @@ func Report(ctx context.Context, name metric_info.MetricName, labels map[string]
 		panic("metrics not initialized, call Init() first")
 	}
 	r.Report(ctx, name, labels, value)
+	logger.Debug(ctx, "metrics reported",
+		field.String("name", name.String()),
+		field.Float64("value", value),
+		field.Any("labels", labels),
+	)
 }
