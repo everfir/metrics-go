@@ -5,6 +5,7 @@ import (
 
 	"github.com/everfir/metrics-go"
 	"github.com/everfir/metrics-go/structs/metric_info"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
@@ -40,6 +41,7 @@ func NewBaseMetricsMiddleware() (ret *BaseMetricsMiddleware) {
 		Type:         metric_info.Histogram,
 		Name:         MetricLatency,
 		Help:         "请求时延",
+		Buckets:      prometheus.LinearBuckets(50, 50, 10), // 50ms 到 5s
 		Labels:       []string{"method", "status"},
 		LabelHandler: map[string]metric_info.LabelHandler{},
 	}
